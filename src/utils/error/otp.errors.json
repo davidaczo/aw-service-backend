@@ -1,0 +1,17 @@
+{
+  "400otp00": {
+    "name": "Invalid session",
+    "type": "OTP",
+    "code": "400otp00"
+  },
+  "400otp01": {
+    "name": "Session expired",
+    "type": "OTP",
+    "code": "400otp01"
+  },
+  "400otp02": {
+    "name": "Invalid code",
+    "type": "OTP",
+    "code": "400otp02"
+  }
+}

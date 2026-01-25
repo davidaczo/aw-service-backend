@@ -1,0 +1,12 @@
+{
+  "400au00": {
+    "name": "Invalid email or password",
+    "type": "auth",
+    "code": "400au00"
+  },
+  "403au00": {
+    "name": "Project level authentication is disabled",
+    "type": "auth",
+    "code": "403au00"
+  }
+}
