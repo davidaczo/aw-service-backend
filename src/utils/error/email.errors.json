@@ -1,0 +1,7 @@
+{
+  "500em01": {
+    "message": "Failed to send email due to server error.",
+    "type": "EmailError",
+    "code": "500em01"
+  }
+}
