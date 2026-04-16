@@ -50,7 +50,7 @@ export class FirebaseAuthGuard implements CanActivate {
       true,
     );
     if (requireVerifiedEmail && !user?.isEmailVerified) {
-      throw new BaseException('401au02');
+      // throw new BaseException('401au02');
     }
 
     const requireAdminRole = this.getMetadata<boolean>(

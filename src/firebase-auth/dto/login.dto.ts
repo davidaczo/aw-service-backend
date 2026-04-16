@@ -7,4 +7,8 @@ export class LoginDto implements Readonly<LoginDto> {
 
   @IsOptional()
   name: string;
+
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
 }

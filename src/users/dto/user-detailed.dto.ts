@@ -1,35 +1,28 @@
-import { UserMinDto } from './user-min.dto';
-import { configService } from '../../config/config.service';
-import { User } from '../../entities/user.entity';
+import { UserRole } from '../enum/user-role.enum';
+import { OnboardingStep } from '../enum/onboarding-step';
 import { FirebaseUser } from '../../entities/firebase.user.entity';
 
-export class UserDetailedDto
-  extends UserMinDto
-  implements Readonly<UserDetailedDto>
-{
+export class UserDetailedDto {
+  id: string;
+  firebaseId: string;
   email: string;
-  isEmailVerified?: boolean;
   name: string;
-  socketToken: string;
-  apiVersion: string;
-  secondFactorEnabled: boolean;
+  role: UserRole;
+  isEmailVerified: boolean;
+  photoUrl: string | null;
+  onboardingStep: OnboardingStep;
+  createdAt: Date;
 
-  constructor(data: any) {
-    if (data) {
-      super(data);
-      this.email = data.email;
-      this.socketToken = configService.getSocketToken();
-      this.apiVersion = configService.getApiVersion();
-      if (data instanceof User) {
-        this.name = `${data.firstName} ${data.lastName}`;
-        this.secondFactorEnabled = data.secondFactorEnabled;
-      }
-      if (data instanceof FirebaseUser) {
-        this.isEmailVerified = data.isEmailVerified;
-        this.firstName = data.name.split(' ')?.[0] || '';
-        this.lastName = data.name.split(' ')?.[1] || '';
-        this.name = data.name;
-      }
-    }
+  constructor(user: FirebaseUser) {
+    this.id = user.id;
+    this.firebaseId = user.firebaseId;
+    this.email = user.email;
+    this.name = user.name;
+    this.role = user.role;
+    this.isEmailVerified = user.isEmailVerified;
+    this.photoUrl = user.photoUrl ?? null;
+    this.onboardingStep = user.onboardingStep;
+    this.createdAt = user.createdAt;
+    return this;
   }
 }

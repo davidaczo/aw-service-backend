@@ -35,6 +35,10 @@ class ConfigService {
     return this.apiVersion;
   }
 
+  public getMode(): string {
+    return this.getValue('MODE', false);
+  }
+
   public getPort() {
     return Number.parseInt(this.getValue('PORT', true), 10);
   }
@@ -75,6 +79,10 @@ class ConfigService {
       migrationsRun: JSON.parse(this.getValue('RUN_MIGRATIONS')),
       ssl: false,
     };
+  }
+
+  getExpoAccessToken() {
+    return this.getValue('EXPO_ACCESS_TOKEN');
   }
 
   getBaseUserCredentials() {
@@ -140,6 +148,13 @@ class ConfigService {
     } catch (error) {
       return [];
     }
+  }
+  getSendgridConfigApiKey() {
+    return this.getValue('SENDGRID_API_KEY', false);
+  }
+
+  getSendgridFromEmail() {
+    return this.getValue('SENDGRID_FROM_EMAIL', false);
   }
 }
 

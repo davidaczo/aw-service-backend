@@ -3,5 +3,20 @@
     "name": "This email address is taken",
     "type": "user",
     "code": "409use00"
+  },
+  "404use01": {
+    "name": "User not found",
+    "type": "user",
+    "code": "404use01"
+  },
+  "401au01": {
+    "name": "Unauthorized access to user data",
+    "type": "auth",
+    "code": "401au01"
+  },
+  "500us01": {
+    "name": "User service unavailable",
+    "type": "user",
+    "code": "500us01"
   }
 }

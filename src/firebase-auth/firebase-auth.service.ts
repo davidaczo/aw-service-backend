@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import BaseException from '../utils/exceptions/base.exception';
 import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
@@ -12,15 +11,20 @@ import { CheckEmailResponseDto } from './dto/check-email-reponse.dto';
 import { inTransaction } from '../utils/sql/transactions';
 import { LoginResponseDto } from './dto/login-reponse.dto';
 import { FirebaseUser } from '../entities/firebase.user.entity';
+import { OnboardingStep } from '../users/enum/onboarding-step';
 
 @Injectable()
 export class FirebaseAuthService {
   constructor(
-    @InjectRepository(User)
+    @InjectRepository(FirebaseUser)
     private readonly firebaseUserRepo: Repository<FirebaseUser>,
   ) {}
 
-  async loginUser({ accessToken, name }: LoginDto): Promise<LoginResponseDto> {
+  async loginUser({
+    accessToken,
+    name,
+    photoUrl,
+  }: LoginDto): Promise<LoginResponseDto> {
     try {
       const decodedToken = await admin.auth().verifyIdToken(accessToken);
       return await inTransaction(async (queryRunner) => {
@@ -31,23 +35,27 @@ export class FirebaseAuthService {
           },
         });
         let isNew = false;
+        console.log('user', user);
         if (!user) {
           const mName = decodedToken.name ?? name.trim() ?? null;
-
+          console.log('isNew', isNew);
+          isNew = true;
           user = await queryRunner.manager.save(FirebaseUser, {
             firebaseId: decodedToken.user_id,
             email: decodedToken.email,
             name: mName,
             passwordResetToken: crypto.randomBytes(64).toString('hex'),
             role: UserRole.USER,
+            isEmailVerified: true,
+            photoUrl: photoUrl,
+            onboardingStep: OnboardingStep.SET_PERSONAL_DATA,
           });
-          isNew = true;
         }
         return new LoginResponseDto(user, isNew);
       });
     } catch (error) {
       console.log(error);
-      throw new BaseException('401au01');
+      throw new BaseException('500us01');
     }
   }
 
@@ -55,7 +63,7 @@ export class FirebaseAuthService {
     email,
   }: CheckEmailDto): Promise<CheckEmailResponseDto> {
     const user = await this.firebaseUserRepo.findOne({
-      where: { email, isDeleted: false },
+      where: { email: email, isDeleted: false },
     });
     return new CheckEmailResponseDto(!!user);
   }
