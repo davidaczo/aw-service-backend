@@ -1,0 +1,7 @@
+{
+  "404we00": { "name": "Work entry not found", "type": "work-entry", "code": "404we00" },
+  "400we00": { "name": "Work entry already stopped", "type": "work-entry", "code": "400we00" },
+  "400we01": { "name": "Work entry is not started", "type": "work-entry", "code": "400we01" },
+  "400we02": { "name": "Work entry is not paused", "type": "work-entry", "code": "400we02" },
+  "404we01": { "name": "Work entry session not found", "type": "work-entry", "code": "404we01" }
+}

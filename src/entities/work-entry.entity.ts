@@ -1,6 +1,15 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { FirebaseUser } from './firebase.user.entity';
+import { WorkEntryStatus } from './enum/work-entry-status.enum';
+import { WorkEntrySession } from './work-entry-session.entity';
 
 @Entity()
 @Index(['userId'])
@@ -39,4 +48,15 @@ export class WorkEntry extends BaseEntity {
 
   @Column('decimal', { precision: 10, scale: 2 })
   hectares: number;
+
+  @Column({
+    type: 'enum',
+    enum: WorkEntryStatus,
+    default: WorkEntryStatus.TODO,
+    nullable: false,
+  })
+  status: WorkEntryStatus;
+
+  @OneToMany(() => WorkEntrySession, (session) => session.workEntry)
+  sessions: WorkEntrySession[];
 }

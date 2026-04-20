@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Body,
   Param,
@@ -14,6 +15,10 @@ import RequestWithFirebaseUser from '../firebase-auth/interfaces/request-with-fi
 import { WorkEntriesService } from './work-entries.service';
 import { CreateWorkEntryDto } from './dto/create-work-entry.dto';
 import { WorkEntryDto } from './dto/work-entry.dto';
+import {
+  WorkEntrySessionDto,
+  parseWorkEntrySessionToDto,
+} from './dto/work-entry-session.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
 import { num } from '../utils/utils';
 
@@ -65,5 +70,53 @@ export class WorkEntriesController {
     @Param('id') id: string,
   ): Promise<boolean> {
     return this.workEntriesService.deleteWorkEntry(id);
+  }
+
+  @Put(':id/start')
+  async startWorkEntry(
+    @Req() request: RequestWithFirebaseUser,
+    @Param('id') id: string,
+  ): Promise<{ id: string }> {
+    const sessionId = await this.workEntriesService.startWorkEntry(
+      id,
+      request.user.id,
+    );
+    return { id: sessionId };
+  }
+
+  @Put(':id/pause')
+  async pauseWorkEntry(
+    @Req() request: RequestWithFirebaseUser,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.workEntriesService.pauseWorkEntry(id, request.user.id);
+  }
+
+  @Put(':id/resume')
+  async resumeWorkEntry(
+    @Req() request: RequestWithFirebaseUser,
+    @Param('id') id: string,
+  ): Promise<{ id: string }> {
+    const sessionId = await this.workEntriesService.resumeWorkEntry(
+      id,
+      request.user.id,
+    );
+    return { id: sessionId };
+  }
+
+  @Put(':id/stop')
+  async stopWorkEntry(
+    @Req() request: RequestWithFirebaseUser,
+    @Param('id') id: string,
+  ): Promise<void> {
+    return this.workEntriesService.stopWorkEntry(id, request.user.id);
+  }
+
+  @Get(':id/sessions')
+  async getSessionsForWorkEntry(
+    @Param('id') id: string,
+  ): Promise<WorkEntrySessionDto[]> {
+    const sessions = await this.workEntriesService.getSessionsForWorkEntry(id);
+    return sessions.map(parseWorkEntrySessionToDto);
   }
 }

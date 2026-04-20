@@ -4,6 +4,7 @@ import * as passwordErrors from './password.errors.json';
 import * as userErrors from './user.errors.json';
 import * as validationErrors from './validation.errors.json';
 import * as emailErrors from './email.errors.json';
+import * as workEntryErrors from './work-entry.errors.json';
 
 export const customErrors = {
   ...authErrors,
@@ -12,4 +13,5 @@ export const customErrors = {
   ...userErrors,
   ...validationErrors,
   ...emailErrors,
+  ...workEntryErrors,
 };
