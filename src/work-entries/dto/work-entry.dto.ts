@@ -40,7 +40,7 @@ export const parseWorkEntryToDto = (
   dto.operatingHours = entry.operatingHours;
   dto.hectares = Number(entry.hectares);
   dto.status = entry.status;
-  dto.sessions = sessions.map(parseWorkEntrySessionToDto);
+  dto.sessions = sessions.map((s) => parseWorkEntrySessionToDto(s));
   dto.createdAt = entry.createdAt.toISOString();
   dto.updatedAt = entry.lastChangedAt.toISOString();
   return dto;

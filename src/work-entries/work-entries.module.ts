@@ -2,11 +2,14 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WorkEntry } from '../entities/work-entry.entity';
 import { WorkEntrySession } from '../entities/work-entry-session.entity';
+import { WorkSessionMedia } from '../entities/work-session-media.entity';
 import { WorkEntriesService } from './work-entries.service';
 import { WorkEntriesController } from './work-entries.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([WorkEntry, WorkEntrySession])],
+  imports: [
+    TypeOrmModule.forFeature([WorkEntry, WorkEntrySession, WorkSessionMedia]),
+  ],
   controllers: [WorkEntriesController],
   providers: [WorkEntriesService],
   exports: [WorkEntriesService],

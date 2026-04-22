@@ -9,7 +9,13 @@ import {
   Query,
   UseGuards,
   Req,
+  UploadedFiles,
+  UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { FirebaseAuthGuard } from '../firebase-auth/guards/firebase-auth.guard';
 import RequestWithFirebaseUser from '../firebase-auth/interfaces/request-with-firebase-user.interface';
 import { WorkEntriesService } from './work-entries.service';
@@ -19,6 +25,8 @@ import {
   WorkEntrySessionDto,
   parseWorkEntrySessionToDto,
 } from './dto/work-entry-session.dto';
+import { PauseWorkEntryDto } from './dto/pause-work-entry.dto';
+import { StopWorkEntryDto } from './dto/stop-work-entry.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
 import { num } from '../utils/utils';
 
@@ -73,23 +81,60 @@ export class WorkEntriesController {
   }
 
   @Put(':id/start')
+  @UseInterceptors(
+    FilesInterceptor('images', 20, {
+      storage: diskStorage({
+        destination: './uploads/work-session-images',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(
+            Math.random() * 1e9,
+          )}`;
+          const ext = extname(file.originalname);
+          cb(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   async startWorkEntry(
     @Req() request: RequestWithFirebaseUser,
     @Param('id') id: string,
+    @UploadedFiles() images: Express.Multer.File[],
   ): Promise<{ id: string }> {
     const sessionId = await this.workEntriesService.startWorkEntry(
       id,
       request.user.id,
+      images,
     );
     return { id: sessionId };
   }
 
   @Put(':id/pause')
+  @UseInterceptors(
+    FilesInterceptor('images', 20, {
+      storage: diskStorage({
+        destination: './uploads/work-session-images',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(
+            Math.random() * 1e9,
+          )}`;
+          const ext = extname(file.originalname);
+          cb(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   async pauseWorkEntry(
     @Req() request: RequestWithFirebaseUser,
     @Param('id') id: string,
+    @Body() dto: PauseWorkEntryDto,
+    @UploadedFiles() images: Express.Multer.File[],
   ): Promise<void> {
-    return this.workEntriesService.pauseWorkEntry(id, request.user.id);
+    return this.workEntriesService.pauseWorkEntry(
+      id,
+      request.user.id,
+      dto.reason,
+      images,
+    );
   }
 
   @Put(':id/resume')
@@ -105,11 +150,37 @@ export class WorkEntriesController {
   }
 
   @Put(':id/stop')
+  @UseInterceptors(
+    FilesInterceptor('images', 20, {
+      storage: diskStorage({
+        destination: './uploads/work-session-images',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(
+            Math.random() * 1e9,
+          )}`;
+          const ext = extname(file.originalname);
+          cb(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   async stopWorkEntry(
     @Req() request: RequestWithFirebaseUser,
     @Param('id') id: string,
+    @Body() dto: StopWorkEntryDto,
+    @UploadedFiles() images: Express.Multer.File[],
   ): Promise<void> {
-    return this.workEntriesService.stopWorkEntry(id, request.user.id);
+    if (!images || images.length === 0) {
+      throw new BadRequestException(
+        'At least one image is required to stop a work entry',
+      );
+    }
+    return this.workEntriesService.stopWorkEntry(
+      id,
+      request.user.id,
+      dto.reason,
+      images,
+    );
   }
 
   @Get(':id/sessions')
@@ -117,6 +188,6 @@ export class WorkEntriesController {
     @Param('id') id: string,
   ): Promise<WorkEntrySessionDto[]> {
     const sessions = await this.workEntriesService.getSessionsForWorkEntry(id);
-    return sessions.map(parseWorkEntrySessionToDto);
+    return sessions.map((s) => parseWorkEntrySessionToDto(s));
   }
 }

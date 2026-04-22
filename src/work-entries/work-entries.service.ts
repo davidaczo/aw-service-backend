@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as fs from 'fs';
 import { WorkEntry } from '../entities/work-entry.entity';
 import { WorkEntryStatus } from '../entities/enum/work-entry-status.enum';
 import {
   WorkEntrySession,
   WorkEntrySessionStatus,
 } from '../entities/work-entry-session.entity';
+import { WorkSessionMedia } from '../entities/work-session-media.entity';
 import { FirebaseUser } from '../entities/firebase.user.entity';
 import { CreateWorkEntryDto } from './dto/create-work-entry.dto';
 import { WorkEntryDto, parseWorkEntryToDto } from './dto/work-entry.dto';
@@ -21,7 +23,11 @@ export class WorkEntriesService {
     private readonly workEntryRepository: Repository<WorkEntry>,
     @InjectRepository(WorkEntrySession)
     private readonly workEntrySessionRepository: Repository<WorkEntrySession>,
-  ) {}
+    @InjectRepository(WorkSessionMedia)
+    private readonly workSessionMediaRepository: Repository<WorkSessionMedia>,
+  ) {
+    fs.mkdirSync('./uploads/work-session-images', { recursive: true });
+  }
 
   async createWorkEntry(
     user: FirebaseUser,
@@ -94,6 +100,7 @@ export class WorkEntriesService {
     const sessions = await this.workEntrySessionRepository.find({
       where: { workEntryId: id, isDeleted: false },
       order: { startedAt: 'ASC' },
+      relations: ['media'],
     });
 
     return parseWorkEntryToDto(entry, sessions);
@@ -113,7 +120,11 @@ export class WorkEntriesService {
     return true;
   }
 
-  async startWorkEntry(id: string, userId: string): Promise<string> {
+  async startWorkEntry(
+    id: string,
+    userId: string,
+    images?: Express.Multer.File[],
+  ): Promise<string> {
     const entry = await this.workEntryRepository.findOne({
       where: { id, isDeleted: false },
     });
@@ -140,10 +151,27 @@ export class WorkEntriesService {
       ...getCreateValues(userId),
     });
     const savedSession = await this.workEntrySessionRepository.save(session);
+
+    if (images && images.length > 0) {
+      const mediaRecords = images.map((file) =>
+        this.workSessionMediaRepository.create({
+          sessionId: savedSession.id,
+          filePath: file.path,
+          ...getCreateValues(userId),
+        }),
+      );
+      await this.workSessionMediaRepository.save(mediaRecords);
+    }
+
     return savedSession.id;
   }
 
-  async pauseWorkEntry(id: string, userId: string): Promise<void> {
+  async pauseWorkEntry(
+    id: string,
+    userId: string,
+    reason?: string,
+    images?: Express.Multer.File[],
+  ): Promise<void> {
     const entry = await this.workEntryRepository.findOne({
       where: { id, isDeleted: false },
     });
@@ -169,9 +197,21 @@ export class WorkEntriesService {
       Object.assign(activeSession, {
         status: WorkEntrySessionStatus.STOPPED,
         pausedAt: new Date(),
+        pauseReason: reason ?? null,
         ...getUpdateValues(userId),
       });
       await this.workEntrySessionRepository.save(activeSession);
+
+      if (images && images.length > 0) {
+        const mediaRecords = images.map((file) =>
+          this.workSessionMediaRepository.create({
+            sessionId: activeSession.id,
+            filePath: file.path,
+            ...getCreateValues(userId),
+          }),
+        );
+        await this.workSessionMediaRepository.save(mediaRecords);
+      }
     }
 
     Object.assign(entry, {
@@ -211,7 +251,12 @@ export class WorkEntriesService {
     return savedSession.id;
   }
 
-  async stopWorkEntry(id: string, userId: string): Promise<void> {
+  async stopWorkEntry(
+    id: string,
+    userId: string,
+    reason?: string,
+    images?: Express.Multer.File[],
+  ): Promise<void> {
     const entry = await this.workEntryRepository.findOne({
       where: { id, isDeleted: false },
     });
@@ -237,9 +282,21 @@ export class WorkEntriesService {
       Object.assign(activeSession, {
         status: WorkEntrySessionStatus.STOPPED,
         stoppedAt: new Date(),
+        pauseReason: reason ?? null,
         ...getUpdateValues(userId),
       });
       await this.workEntrySessionRepository.save(activeSession);
+
+      if (images && images.length > 0) {
+        const mediaRecords = images.map((file) =>
+          this.workSessionMediaRepository.create({
+            sessionId: activeSession.id,
+            filePath: file.path,
+            ...getCreateValues(userId),
+          }),
+        );
+        await this.workSessionMediaRepository.save(mediaRecords);
+      }
     }
 
     Object.assign(entry, {
@@ -253,6 +310,7 @@ export class WorkEntriesService {
     return this.workEntrySessionRepository.find({
       where: { workEntryId: id, isDeleted: false },
       order: { startedAt: 'ASC' },
+      relations: ['media'],
     });
   }
 }

@@ -1,7 +1,15 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { WorkEntry } from './work-entry.entity';
 import { FirebaseUser } from './firebase.user.entity';
+import { WorkSessionMedia } from './work-session-media.entity';
 
 export enum WorkEntrySessionStatus {
   STARTED = 'STARTED',
@@ -36,6 +44,9 @@ export class WorkEntrySession extends BaseEntity {
   @Column('timestamptz', { nullable: true })
   stoppedAt: Date | null;
 
+  @Column('text', { nullable: true })
+  pauseReason: string | null;
+
   @JoinColumn({ name: 'workEntryId' })
   @ManyToOne(() => WorkEntry, (entry) => entry.sessions)
   workEntry: WorkEntry;
@@ -43,4 +54,7 @@ export class WorkEntrySession extends BaseEntity {
   @JoinColumn({ name: 'userId' })
   @ManyToOne(() => FirebaseUser)
   user: FirebaseUser;
+
+  @OneToMany(() => WorkSessionMedia, (media) => media.session)
+  media: WorkSessionMedia[];
 }
