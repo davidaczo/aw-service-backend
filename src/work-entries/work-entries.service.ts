@@ -17,11 +17,13 @@ import { FirebaseUser } from '../entities/firebase.user.entity';
 import { CreateWorkEntryDto } from './dto/create-work-entry.dto';
 import { WorkEntryDto, parseWorkEntryToDto } from './dto/work-entry.dto';
 import {
-  AssignedWorkEntryDto,
-  PaginatedAssignedWorkEntryDto,
   PaginatedWorkEntryAssignmentDto,
   WorkEntryAssignmentDto,
 } from './dto/work-entry-assignment.dto';
+import {
+  UserAssignedEntryDto,
+  PaginatedUserAssignedEntryDto,
+} from './dto/user-assigned-entry.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
 import BaseException from '../utils/exceptions/base.exception';
 import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
@@ -513,7 +515,7 @@ export class WorkEntriesService {
     userId: string,
     page: number,
     pageSize: number,
-  ): Promise<PaginatedList<AssignedWorkEntryDto>> {
+  ): Promise<PaginatedList<UserAssignedEntryDto>> {
     const [assignments, total] =
       await this.workEntryAssignmentRepository.findAndCount({
         where: { assignedUserId: userId, isDeleted: false },
@@ -525,9 +527,9 @@ export class WorkEntriesService {
 
     const items = assignments
       .filter((a) => a.workEntry && !a.workEntry.isDeleted)
-      .map((a) => new AssignedWorkEntryDto(a, a.workEntry));
+      .map((a) => new UserAssignedEntryDto(a, a.workEntry));
 
-    return new PaginatedAssignedWorkEntryDto(items, {
+    return new PaginatedUserAssignedEntryDto(items, {
       page,
       pageSize: items.length,
       pageCount: Math.ceil(total / pageSize),

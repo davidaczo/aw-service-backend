@@ -25,10 +25,8 @@ import {
   WorkEntrySessionDto,
   parseWorkEntrySessionToDto,
 } from './dto/work-entry-session.dto';
-import {
-  AssignedWorkEntryDto,
-  WorkEntryAssignmentDto,
-} from './dto/work-entry-assignment.dto';
+import { WorkEntryAssignmentDto } from './dto/work-entry-assignment.dto';
+import { UserAssignedEntryDto } from './dto/user-assigned-entry.dto';
 import { PauseWorkEntryDto } from './dto/pause-work-entry.dto';
 import { StopWorkEntryDto } from './dto/stop-work-entry.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
@@ -231,7 +229,7 @@ export class WorkEntriesController {
     @Param('userId') userId: string,
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 20,
-  ): Promise<PaginatedList<AssignedWorkEntryDto>> {
+  ): Promise<PaginatedList<UserAssignedEntryDto>> {
     return this.workEntriesService.getUserAssignments(
       userId,
       num(page),
