@@ -1,6 +1,5 @@
 export enum WorkEntryStatus {
   TODO = 'TODO',
-  STARTED = 'STARTED',
-  PAUSED = 'PAUSED',
+  IN_PROGRESS = 'IN_PROGRESS',
   STOPPED = 'STOPPED',
 }

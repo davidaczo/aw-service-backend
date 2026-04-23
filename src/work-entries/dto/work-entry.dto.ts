@@ -4,6 +4,8 @@ import {
   parseWorkEntrySessionToDto,
 } from './work-entry-session.dto';
 import { WorkEntrySession } from '../../entities/work-entry-session.entity';
+import { WorkEntryAssignment } from '../../entities/work-entry-assignment.entity';
+import { WorkEntryAssignmentDto } from './work-entry-assignment.dto';
 
 export class WorkEntryDto {
   id: string;
@@ -19,6 +21,7 @@ export class WorkEntryDto {
   hectares: number;
   status: string;
   sessions: WorkEntrySessionDto[];
+  assignments: WorkEntryAssignmentDto[];
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +29,7 @@ export class WorkEntryDto {
 export const parseWorkEntryToDto = (
   entry: WorkEntry,
   sessions: WorkEntrySession[] = [],
+  assignments: WorkEntryAssignment[] = [],
 ): WorkEntryDto => {
   const dto = new WorkEntryDto();
   dto.id = entry.id;
@@ -41,6 +45,7 @@ export const parseWorkEntryToDto = (
   dto.hectares = Number(entry.hectares);
   dto.status = entry.status;
   dto.sessions = sessions.map((s) => parseWorkEntrySessionToDto(s));
+  dto.assignments = assignments.map((a) => new WorkEntryAssignmentDto(a));
   dto.createdAt = entry.createdAt.toISOString();
   dto.updatedAt = entry.lastChangedAt.toISOString();
   return dto;

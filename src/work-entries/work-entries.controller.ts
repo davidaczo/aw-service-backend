@@ -25,6 +25,10 @@ import {
   WorkEntrySessionDto,
   parseWorkEntrySessionToDto,
 } from './dto/work-entry-session.dto';
+import {
+  AssignedWorkEntryDto,
+  WorkEntryAssignmentDto,
+} from './dto/work-entry-assignment.dto';
 import { PauseWorkEntryDto } from './dto/pause-work-entry.dto';
 import { StopWorkEntryDto } from './dto/stop-work-entry.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
@@ -189,5 +193,49 @@ export class WorkEntriesController {
   ): Promise<WorkEntrySessionDto[]> {
     const sessions = await this.workEntriesService.getSessionsForWorkEntry(id);
     return sessions.map((s) => parseWorkEntrySessionToDto(s));
+  }
+
+  @Post(':id/assignments/:userId')
+  @UseGuards(FirebaseAuthGuard)
+  async assignUser(
+    @Req() request: RequestWithFirebaseUser,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ): Promise<WorkEntryAssignmentDto> {
+    return this.workEntriesService.assignUser(id, userId, request.user);
+  }
+
+  @Delete(':id/assignments/:userId')
+  @UseGuards(FirebaseAuthGuard)
+  async removeAssignment(
+    @Req() request: RequestWithFirebaseUser,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    return this.workEntriesService.removeAssignment(id, userId, request.user);
+  }
+
+  @Get(':id/assignments')
+  @UseGuards(FirebaseAuthGuard)
+  async getAssignments(
+    @Param('id') id: string,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ): Promise<PaginatedList<WorkEntryAssignmentDto>> {
+    return this.workEntriesService.getAssignments(id, num(page), num(pageSize));
+  }
+
+  @Get('user/:userId/assignments')
+  @UseGuards(FirebaseAuthGuard)
+  async getUserAssignments(
+    @Param('userId') userId: string,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ): Promise<PaginatedList<AssignedWorkEntryDto>> {
+    return this.workEntriesService.getUserAssignments(
+      userId,
+      num(page),
+      num(pageSize),
+    );
   }
 }
