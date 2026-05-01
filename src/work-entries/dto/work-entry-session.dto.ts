@@ -12,7 +12,8 @@ export class WorkEntrySessionDto {
   pausedAt: string | null;
   stoppedAt: string | null;
   pauseReason: string | null;
-  media: WorkSessionMediaDto[];
+  startImages: WorkSessionMediaDto[];
+  endImages: WorkSessionMediaDto[];
   createdAt: string;
 }
 
@@ -29,14 +30,17 @@ export const parseWorkEntrySessionToDto = (
   dto.pausedAt = session.pausedAt ? session.pausedAt.toISOString() : null;
   dto.stoppedAt = session.stoppedAt ? session.stoppedAt.toISOString() : null;
   dto.pauseReason = session.pauseReason ?? null;
-  dto.media = (session.media ?? []).map((m) => {
+  const allMedia = (session.media ?? []).map((m) => {
     const mediaDto = new WorkSessionMediaDto();
     mediaDto.id = m.id;
     mediaDto.url = `${apiUrl}/uploads/work-session-images/${path.basename(
       m.filePath,
     )}`;
+    mediaDto.phase = m.phase;
     return mediaDto;
   });
+  dto.startImages = allMedia.filter((m) => m.phase === 'START');
+  dto.endImages = allMedia.filter((m) => m.phase === 'END');
   dto.createdAt = session.createdAt.toISOString();
   return dto;
 };

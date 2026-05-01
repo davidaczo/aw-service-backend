@@ -28,6 +28,7 @@ import { PaginatedList } from '../dto/paginated-list.dto';
 import BaseException from '../utils/exceptions/base.exception';
 import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
 import { UserRole } from '../users/enum/user-role.enum';
+import { WorkSessionMediaPhase } from '../entities/enum/work-session-media-phase.enum';
 
 @Injectable()
 export class WorkEntriesService {
@@ -210,6 +211,7 @@ export class WorkEntriesService {
         this.workSessionMediaRepository.create({
           sessionId: savedSession.id,
           filePath: file.path,
+          phase: WorkSessionMediaPhase.START,
           ...getCreateValues(userId),
         }),
       );
@@ -269,6 +271,7 @@ export class WorkEntriesService {
           this.workSessionMediaRepository.create({
             sessionId: activeSession.id,
             filePath: file.path,
+            phase: WorkSessionMediaPhase.END,
             ...getCreateValues(userId),
           }),
         );
@@ -375,6 +378,7 @@ export class WorkEntriesService {
           this.workSessionMediaRepository.create({
             sessionId: activeSession.id,
             filePath: file.path,
+            phase: WorkSessionMediaPhase.END,
             ...getCreateValues(userId),
           }),
         );
