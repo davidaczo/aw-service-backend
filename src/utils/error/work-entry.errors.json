@@ -3,5 +3,15 @@
   "400we00": { "name": "Work entry already stopped", "type": "work-entry", "code": "400we00" },
   "400we01": { "name": "Work entry is not started", "type": "work-entry", "code": "400we01" },
   "400we02": { "name": "Work entry is not paused", "type": "work-entry", "code": "400we02" },
-  "404we01": { "name": "Work entry session not found", "type": "work-entry", "code": "404we01" }
+  "404we01": { "name": "Work entry session not found", "type": "work-entry", "code": "404we01" },
+  "400we03": { "name": "Work entry is globally stopped", "type": "work-entry", "code": "400we03" },
+  "400we04": { "name": "You have already stopped your work on this entry", "type": "work-entry", "code": "400we04" },
+  "400we05": { "name": "You already have an active session", "type": "work-entry", "code": "400we05" },
+  "400we06": { "name": "Cannot pause - you don't have an active work session", "type": "work-entry", "code": "400we06" },
+  "400we07": { "name": "Cannot resume - you are not in paused state", "type": "work-entry", "code": "400we07" },
+  "400we08": { "name": "Work entry is already stopped", "type": "work-entry", "code": "400we08" },
+  "404we10": { "name": "No assignment found for this user", "type": "work-entry", "code": "404we10" },
+  "403we10": { "name": "Admin permission required", "type": "work-entry", "code": "403we10" },
+  "409we10": { "name": "Assignment already exists", "type": "work-entry", "code": "409we10" },
+  "404we11": { "name": "Target user not found", "type": "work-entry", "code": "404we11" }
 }

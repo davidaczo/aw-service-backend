@@ -60,11 +60,6 @@ export class UsersService {
     pageSize = 10,
     search?: string,
   ): Promise<PaginatedListUserDto> {
-    // Check if user is admin
-    // if (adminUser.role !== UserRole.ADMIN) {
-    //   throw new BaseException('403use00');
-    // }
-
     let qb = this.firebaseRepository
       .createQueryBuilder('user')
       .where('user.isDeleted = :isDeleted', { isDeleted: false })
