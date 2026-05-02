@@ -30,6 +30,8 @@ import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
 import { inTransaction } from '../utils/sql/transactions';
 import { UserRole } from '../users/enum/user-role.enum';
 import { WorkSessionMediaPhase } from '../entities/enum/work-session-media-phase.enum';
+import {UpdateWorkEntrySessionDto} from "./dto/update-work-entry-session.dto";
+import {parseWorkEntrySessionToDto, WorkEntrySessionDto} from "./dto/work-entry-session.dto";
 
 @Injectable()
 export class WorkEntriesService {
@@ -578,5 +580,52 @@ export class WorkEntriesService {
       pageCount: Math.ceil(total / pageSize),
       total,
     });
+  }
+
+  async updateSession(
+      sessionId: string,
+      dto: UpdateWorkEntrySessionDto,
+      requestingUser: FirebaseUser,
+  ): Promise<WorkEntrySessionDto> {
+
+    if (requestingUser.role !== UserRole.ADMIN) {
+      throw new BaseException('403we10');
+    }
+
+    const session = await this.workEntrySessionRepository.findOne({
+      where: { id: sessionId, isDeleted: false },
+      relations: ['media'],
+    });
+
+    if (!session) {
+      throw new BaseException('404we00');
+    }
+
+    const startedAt = dto.startedAt ? new Date(dto.startedAt) : session.startedAt;
+    const stoppedAt = dto.stoppedAt ? new Date(dto.stoppedAt) : session.stoppedAt;
+    const pausedAt  = dto.pausedAt  ? new Date(dto.pausedAt)  : session.pausedAt;
+
+    if (startedAt && stoppedAt && startedAt >= stoppedAt) {
+      throw new BaseException('400we13');
+    }
+
+    if (startedAt && pausedAt && startedAt >= pausedAt) {
+      throw new BaseException('400we14');
+    }
+
+    if (pausedAt && stoppedAt && pausedAt >= stoppedAt) {
+      throw new BaseException('400we15');
+    }
+
+    Object.assign(session, {
+      startedAt,
+      stoppedAt,
+      pausedAt,
+      ...getUpdateValues(requestingUser.id),
+    });
+
+    const saved = await this.workEntrySessionRepository.save(session);
+
+    return parseWorkEntrySessionToDto(saved);
   }
 }

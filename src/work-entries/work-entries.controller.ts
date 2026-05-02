@@ -31,6 +31,7 @@ import { PauseWorkEntryDto } from './dto/pause-work-entry.dto';
 import { StopWorkEntryDto } from './dto/stop-work-entry.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
 import { num } from '../utils/utils';
+import {UpdateWorkEntrySessionDto} from "./dto/update-work-entry-session.dto";
 
 @Controller('work-entries')
 @UseGuards(FirebaseAuthGuard)
@@ -182,6 +183,20 @@ export class WorkEntriesController {
       request.user.id,
       dto.reason,
       images,
+    );
+  }
+
+  @Put('sessions/:sessionId')
+  @UseGuards(FirebaseAuthGuard)
+  async updateSession(
+      @Req() request: RequestWithFirebaseUser,
+      @Param('sessionId') sessionId: string,
+      @Body() dto: UpdateWorkEntrySessionDto,
+  ): Promise<WorkEntrySessionDto> {
+    return this.workEntriesService.updateSession(
+        sessionId,
+        dto,
+        request.user,
     );
   }
 
