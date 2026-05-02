@@ -13,5 +13,6 @@
   "404we10": { "name": "No assignment found for this user", "type": "work-entry", "code": "404we10" },
   "403we10": { "name": "Admin permission required", "type": "work-entry", "code": "403we10" },
   "409we10": { "name": "Assignment already exists", "type": "work-entry", "code": "409we10" },
-  "404we11": { "name": "Target user not found", "type": "work-entry", "code": "404we11" }
+  "404we11": { "name": "Target user not found", "type": "work-entry", "code": "404we11" },
+  "400we12": { "name": "One or more assigned user IDs are invalid or deleted", "type": "work-entry", "code": "400we12" }
 }
