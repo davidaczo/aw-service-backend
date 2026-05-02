@@ -9,6 +9,7 @@ import {
 import { BaseEntity } from './base.entity';
 import { FirebaseUser } from './firebase.user.entity';
 import { WorkEntryStatus } from './enum/work-entry-status.enum';
+import { WorkEntryPriority } from './enum/work-entry-priority.enum';
 import { WorkEntrySession } from './work-entry-session.entity';
 
 @Entity()
@@ -56,6 +57,13 @@ export class WorkEntry extends BaseEntity {
     nullable: false,
   })
   status: WorkEntryStatus;
+
+  @Column({
+    type: 'enum',
+    enum: WorkEntryPriority,
+    nullable: true,
+  })
+  priority: WorkEntryPriority;
 
   @OneToMany(() => WorkEntrySession, (session) => session.workEntry)
   sessions: WorkEntrySession[];

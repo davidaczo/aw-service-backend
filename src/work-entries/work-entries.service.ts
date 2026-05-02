@@ -27,6 +27,7 @@ import {
 import { PaginatedList } from '../dto/paginated-list.dto';
 import BaseException from '../utils/exceptions/base.exception';
 import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
+import { inTransaction } from '../utils/sql/transactions';
 import { UserRole } from '../users/enum/user-role.enum';
 import { WorkSessionMediaPhase } from '../entities/enum/work-session-media-phase.enum';
 
@@ -51,14 +52,52 @@ export class WorkEntriesService {
     user: FirebaseUser,
     dto: CreateWorkEntryDto,
   ): Promise<WorkEntryDto> {
-    const { ...rest } = dto;
-    const entry = this.workEntryRepository.create({
-      ...rest,
-      userId: user.id,
-    });
+    const { assignedUserIds, ...rest } = dto;
 
-    const saved = await this.workEntryRepository.save(entry);
-    return parseWorkEntryToDto(saved);
+    const isAdmin = user.role === UserRole.ADMIN;
+    const userIdsToAssign =
+      isAdmin && assignedUserIds && assignedUserIds.length > 0
+        ? [...new Set(assignedUserIds)]
+        : [];
+
+    if (userIdsToAssign.length > 0) {
+      const foundUsers = await this.firebaseUserRepository.find({
+        where: { id: In(userIdsToAssign), isDeleted: false },
+      });
+      if (foundUsers.length !== userIdsToAssign.length) {
+        throw new BaseException('400we12');
+      }
+    }
+
+    if (userIdsToAssign.length === 0) {
+      const entry = this.workEntryRepository.create({
+        ...rest,
+        userId: user.id,
+      });
+      const saved = await this.workEntryRepository.save(entry);
+      return parseWorkEntryToDto(saved);
+    }
+
+    return inTransaction(async (queryRunner) => {
+      const entry = queryRunner.manager.create(WorkEntry, {
+        ...rest,
+        userId: user.id,
+      });
+      const savedEntry = await queryRunner.manager.save(WorkEntry, entry);
+
+      const assignments = userIdsToAssign.map((assignedUserId) =>
+        queryRunner.manager.create(WorkEntryAssignment, {
+          workEntryId: savedEntry.id,
+          assignedUserId,
+          assignedByUserId: user.id,
+          status: WorkEntryAssignmentStatus.PENDING,
+          ...getCreateValues(user.id),
+        }),
+      );
+      await queryRunner.manager.save(WorkEntryAssignment, assignments);
+
+      return parseWorkEntryToDto(savedEntry);
+    });
   }
 
   async getWorkEntries(

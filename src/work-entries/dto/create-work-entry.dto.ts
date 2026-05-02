@@ -1,4 +1,14 @@
-import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
+import { WorkEntryPriority } from '../../entities/enum/work-entry-priority.enum';
 
 export class CreateWorkEntryDto {
   @IsString()
@@ -31,7 +41,12 @@ export class CreateWorkEntryDto {
   @Min(0)
   hectares: number;
 
+  @IsEnum(WorkEntryPriority)
+  @IsNotEmpty()
+  priority: WorkEntryPriority;
+
   @IsOptional()
-  @IsString()
-  assignedUserId?: string;
+  @IsArray()
+  @IsString({ each: true })
+  assignedUserIds?: string[];
 }

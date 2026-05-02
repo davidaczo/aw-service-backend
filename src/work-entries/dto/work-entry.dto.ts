@@ -1,4 +1,5 @@
 import { WorkEntry } from '../../entities/work-entry.entity';
+import { WorkEntryPriority } from '../../entities/enum/work-entry-priority.enum';
 import {
   WorkEntrySessionDto,
   parseWorkEntrySessionToDto,
@@ -20,6 +21,7 @@ export class WorkEntryDto {
   operatingHours: number;
   hectares: number;
   status: string;
+  priority: WorkEntryPriority | null;
   sessions: WorkEntrySessionDto[];
   assignments: WorkEntryAssignmentDto[];
   createdAt: string;
@@ -44,6 +46,7 @@ export const parseWorkEntryToDto = (
   dto.operatingHours = entry.operatingHours;
   dto.hectares = Number(entry.hectares);
   dto.status = entry.status;
+  dto.priority = entry.priority ?? null;
   dto.sessions = sessions.map((s) => parseWorkEntrySessionToDto(s));
   dto.assignments = assignments.map((a) => new WorkEntryAssignmentDto(a));
   dto.createdAt = entry.createdAt.toISOString();
