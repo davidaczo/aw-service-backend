@@ -14,5 +14,8 @@
   "403we10": { "name": "Admin permission required", "type": "work-entry", "code": "403we10" },
   "409we10": { "name": "Assignment already exists", "type": "work-entry", "code": "409we10" },
   "404we11": { "name": "Target user not found", "type": "work-entry", "code": "404we11" },
-  "400we12": { "name": "One or more assigned user IDs are invalid or deleted", "type": "work-entry", "code": "400we12" }
+  "400we12": { "name": "One or more assigned user IDs are invalid or deleted", "type": "work-entry", "code": "400we12" },
+  "400we13": { "name": "Session start date must be before stop date", "type": "work-entry", "code": "400we13" },
+  "400we14": { "name": "Session start date must be before pause date", "type": "work-entry", "code": "400we14" },
+  "400we15": { "name": "Session pause date must be before stop date", "type": "work-entry", "code": "400we15" }
 }
