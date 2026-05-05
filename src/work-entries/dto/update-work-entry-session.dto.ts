@@ -1,5 +1,5 @@
 export class UpdateWorkEntrySessionDto {
-    startedAt?: string;
-    pausedAt?: string;
-    stoppedAt?: string;
+  startedAt?: string;
+  pausedAt?: string;
+  stoppedAt?: string;
 }

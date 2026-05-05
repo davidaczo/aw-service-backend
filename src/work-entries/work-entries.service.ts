@@ -30,8 +30,11 @@ import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
 import { inTransaction } from '../utils/sql/transactions';
 import { UserRole } from '../users/enum/user-role.enum';
 import { WorkSessionMediaPhase } from '../entities/enum/work-session-media-phase.enum';
-import {UpdateWorkEntrySessionDto} from "./dto/update-work-entry-session.dto";
-import {parseWorkEntrySessionToDto, WorkEntrySessionDto} from "./dto/work-entry-session.dto";
+import { UpdateWorkEntrySessionDto } from './dto/update-work-entry-session.dto';
+import {
+  parseWorkEntrySessionToDto,
+  WorkEntrySessionDto,
+} from './dto/work-entry-session.dto';
 
 @Injectable()
 export class WorkEntriesService {
@@ -105,13 +108,46 @@ export class WorkEntriesService {
   async getWorkEntries(
     page: number,
     pageSize: number,
+    search?: string,
   ): Promise<PaginatedList<WorkEntryDto>> {
-    const [entries, total] = await this.workEntryRepository.findAndCount({
-      where: { isDeleted: false },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+    const qb = this.workEntryRepository
+      .createQueryBuilder('we')
+      .where('we.isDeleted = :isDeleted', { isDeleted: false });
+
+    if (search && search.trim().length > 0) {
+      const q = search.trim().toLowerCase();
+      qb.leftJoin(
+        'work_entry_assignment',
+        'wea',
+        'wea."workEntryId" = we.id AND wea."isDeleted" = false',
+      )
+        .leftJoin('firebase_user', 'u', 'u.id = wea."assignedUserId"')
+        .andWhere(
+          `word_similarity(
+            unaccent(lower(:q)),
+            unaccent(lower(COALESCE(we."clientName", '') || ' ' || COALESCE(we."machineName", '') || ' ' || COALESCE(we."machineModel", '') || ' ' || COALESCE(u.name, '')))
+          ) >= :thr`,
+          { q, thr: 0.4 },
+        )
+        .addSelect(
+          `word_similarity(
+            unaccent(lower(:q)),
+            unaccent(lower(COALESCE(we."clientName", '') || ' ' || COALESCE(we."machineName", '') || ' ' || COALESCE(we."machineModel", '') || ' ' || COALESCE(u.name, '')))
+          )`,
+          'similarity_score',
+        )
+        .distinct(true);
+    }
+
+    if (search && search.trim().length > 0) {
+      qb.orderBy('similarity_score', 'DESC').addOrderBy('we.createdAt', 'DESC');
+    } else {
+      qb.orderBy('we.createdAt', 'DESC');
+    }
+
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [entries, total] = await qb.getManyAndCount();
 
     return {
       items: entries.map((e) => parseWorkEntryToDto(e)),
@@ -583,11 +619,10 @@ export class WorkEntriesService {
   }
 
   async updateSession(
-      sessionId: string,
-      dto: UpdateWorkEntrySessionDto,
-      requestingUser: FirebaseUser,
+    sessionId: string,
+    dto: UpdateWorkEntrySessionDto,
+    requestingUser: FirebaseUser,
   ): Promise<WorkEntrySessionDto> {
-
     if (requestingUser.role !== UserRole.ADMIN) {
       throw new BaseException('403we10');
     }
@@ -601,9 +636,13 @@ export class WorkEntriesService {
       throw new BaseException('404we00');
     }
 
-    const startedAt = dto.startedAt ? new Date(dto.startedAt) : session.startedAt;
-    const stoppedAt = dto.stoppedAt ? new Date(dto.stoppedAt) : session.stoppedAt;
-    const pausedAt  = dto.pausedAt  ? new Date(dto.pausedAt)  : session.pausedAt;
+    const startedAt = dto.startedAt
+      ? new Date(dto.startedAt)
+      : session.startedAt;
+    const stoppedAt = dto.stoppedAt
+      ? new Date(dto.stoppedAt)
+      : session.stoppedAt;
+    const pausedAt = dto.pausedAt ? new Date(dto.pausedAt) : session.pausedAt;
 
     if (startedAt && stoppedAt && startedAt >= stoppedAt) {
       throw new BaseException('400we13');
