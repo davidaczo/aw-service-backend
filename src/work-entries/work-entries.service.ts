@@ -30,11 +30,8 @@ import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
 import { inTransaction } from '../utils/sql/transactions';
 import { UserRole } from '../users/enum/user-role.enum';
 import { WorkSessionMediaPhase } from '../entities/enum/work-session-media-phase.enum';
-import { UpdateWorkEntrySessionDto } from './dto/update-work-entry-session.dto';
-import {
-  parseWorkEntrySessionToDto,
-  WorkEntrySessionDto,
-} from './dto/work-entry-session.dto';
+import {UpdateWorkEntrySessionDto} from "./dto/update-work-entry-session.dto";
+import {parseWorkEntrySessionToDto, WorkEntrySessionDto} from "./dto/work-entry-session.dto";
 
 @Injectable()
 export class WorkEntriesService {
@@ -619,10 +616,11 @@ export class WorkEntriesService {
   }
 
   async updateSession(
-    sessionId: string,
-    dto: UpdateWorkEntrySessionDto,
-    requestingUser: FirebaseUser,
+      sessionId: string,
+      dto: UpdateWorkEntrySessionDto,
+      requestingUser: FirebaseUser,
   ): Promise<WorkEntrySessionDto> {
+
     if (requestingUser.role !== UserRole.ADMIN) {
       throw new BaseException('403we10');
     }
@@ -636,13 +634,9 @@ export class WorkEntriesService {
       throw new BaseException('404we00');
     }
 
-    const startedAt = dto.startedAt
-      ? new Date(dto.startedAt)
-      : session.startedAt;
-    const stoppedAt = dto.stoppedAt
-      ? new Date(dto.stoppedAt)
-      : session.stoppedAt;
-    const pausedAt = dto.pausedAt ? new Date(dto.pausedAt) : session.pausedAt;
+    const startedAt = dto.startedAt ? new Date(dto.startedAt) : session.startedAt;
+    const stoppedAt = dto.stoppedAt ? new Date(dto.stoppedAt) : session.stoppedAt;
+    const pausedAt  = dto.pausedAt  ? new Date(dto.pausedAt)  : session.pausedAt;
 
     if (startedAt && stoppedAt && startedAt >= stoppedAt) {
       throw new BaseException('400we13');

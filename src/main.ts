@@ -6,6 +6,7 @@ import { GlobalExceptionFilter } from './utils/filters/global-exception.filter';
 import { ValidationFilter } from './utils/filters/validation.filter';
 import { ValidationPipe } from './utils/pipes/validation.pipe';
 import { configService } from './config/config.service';
+import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -36,6 +37,11 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
+  });
+
+  app.use((req:Request, _res: Response, next:NextFunction) => {
+    console.log(`→ ${req.method} ${req.url}`);
+    next();
   });
 
   const port = configService.getPort();
