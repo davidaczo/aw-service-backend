@@ -1,0 +1,8 @@
+export interface WorkEntryFilters {
+  search?: string;
+  priority?: string;
+  assignedUserIds?: string;
+  clientName?: string;
+  machineName?: string;
+  machineModel?: string;
+}

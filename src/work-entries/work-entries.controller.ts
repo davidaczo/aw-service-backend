@@ -51,12 +51,20 @@ export class WorkEntriesController {
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 20,
     @Query('search') search?: string,
+    @Query('priority') priority?: string,
+    @Query('assignedUserIds') assignedUserIds?: string,
+    @Query('clientName') clientName?: string,
+    @Query('machineName') machineName?: string,
+    @Query('machineModel') machineModel?: string,
   ): Promise<PaginatedList<WorkEntryDto>> {
-    return this.workEntriesService.getWorkEntries(
-      num(page),
-      num(pageSize),
+    return this.workEntriesService.getWorkEntries(num(page), num(pageSize), {
       search,
-    );
+      priority,
+      assignedUserIds,
+      clientName,
+      machineName,
+      machineModel,
+    });
   }
 
   @Get('user/:userId')
@@ -74,15 +82,11 @@ export class WorkEntriesController {
 
   @Put('session-update/:sessionId')
   async updateSession(
-      @Req() request: RequestWithFirebaseUser,
-      @Param('sessionId') sessionId: string,
-      @Body() dto: UpdateWorkEntrySessionDto,
+    @Req() request: RequestWithFirebaseUser,
+    @Param('sessionId') sessionId: string,
+    @Body() dto: UpdateWorkEntrySessionDto,
   ): Promise<WorkEntrySessionDto> {
-    return this.workEntriesService.updateSession(
-        sessionId,
-        dto,
-        request.user,
-    );
+    return this.workEntriesService.updateSession(sessionId, dto, request.user);
   }
 
   @Get(':id')

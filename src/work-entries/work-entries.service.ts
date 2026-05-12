@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import * as fs from 'fs';
+import { WorkEntryFilters } from './dto/work-entry-filters.interface';
 import { WorkEntry } from '../entities/work-entry.entity';
 import { WorkEntryStatus } from '../entities/enum/work-entry-status.enum';
 import {
@@ -30,8 +31,16 @@ import { getCreateValues, getUpdateValues } from '../utils/sql/queries';
 import { inTransaction } from '../utils/sql/transactions';
 import { UserRole } from '../users/enum/user-role.enum';
 import { WorkSessionMediaPhase } from '../entities/enum/work-session-media-phase.enum';
-import {UpdateWorkEntrySessionDto} from "./dto/update-work-entry-session.dto";
-import {parseWorkEntrySessionToDto, WorkEntrySessionDto} from "./dto/work-entry-session.dto";
+import { UpdateWorkEntrySessionDto } from './dto/update-work-entry-session.dto';
+import {
+  parseWorkEntrySessionToDto,
+  WorkEntrySessionDto,
+} from './dto/work-entry-session.dto';
+
+interface QueryContext {
+  assignmentJoined: boolean;
+  userJoined: boolean;
+}
 
 @Injectable()
 export class WorkEntriesService {
@@ -105,38 +114,26 @@ export class WorkEntriesService {
   async getWorkEntries(
     page: number,
     pageSize: number,
-    search?: string,
+    filters: WorkEntryFilters = {},
   ): Promise<PaginatedList<WorkEntryDto>> {
     const qb = this.workEntryRepository
       .createQueryBuilder('we')
       .where('we.isDeleted = :isDeleted', { isDeleted: false });
 
-    if (search && search.trim().length > 0) {
-      const q = search.trim().toLowerCase();
-      qb.leftJoin(
-        'work_entry_assignment',
-        'wea',
-        'wea."workEntryId" = we.id AND wea."isDeleted" = false',
-      )
-        .leftJoin('firebase_user', 'u', 'u.id = wea."assignedUserId"')
-        .andWhere(
-          `word_similarity(
-            unaccent(lower(:q)),
-            unaccent(lower(COALESCE(we."clientName", '') || ' ' || COALESCE(we."machineName", '') || ' ' || COALESCE(we."machineModel", '') || ' ' || COALESCE(u.name, '')))
-          ) >= :thr`,
-          { q, thr: 0.4 },
-        )
-        .addSelect(
-          `word_similarity(
-            unaccent(lower(:q)),
-            unaccent(lower(COALESCE(we."clientName", '') || ' ' || COALESCE(we."machineName", '') || ' ' || COALESCE(we."machineModel", '') || ' ' || COALESCE(u.name, '')))
-          )`,
-          'similarity_score',
-        )
-        .distinct(true);
-    }
+    const ctx: QueryContext = { assignmentJoined: false, userJoined: false };
 
-    if (search && search.trim().length > 0) {
+    if (filters.priority) this.applyPriorityFilter(qb, filters.priority);
+    if (filters.assignedUserIds)
+      this.applyAssignedUsersFilter(qb, ctx, filters.assignedUserIds);
+    if (filters.clientName) this.applyClientNameFilter(qb, filters.clientName);
+    if (filters.machineName)
+      this.applyMachineNameFilter(qb, filters.machineName);
+    if (filters.machineModel)
+      this.applyMachineModelFilter(qb, filters.machineModel);
+    if (filters.search) this.applySearchFilter(qb, ctx, filters.search);
+
+    const hasSearch = !!filters.search?.trim();
+    if (hasSearch) {
       qb.orderBy('similarity_score', 'DESC').addOrderBy('we.createdAt', 'DESC');
     } else {
       qb.orderBy('we.createdAt', 'DESC');
@@ -616,11 +613,10 @@ export class WorkEntriesService {
   }
 
   async updateSession(
-      sessionId: string,
-      dto: UpdateWorkEntrySessionDto,
-      requestingUser: FirebaseUser,
+    sessionId: string,
+    dto: UpdateWorkEntrySessionDto,
+    requestingUser: FirebaseUser,
   ): Promise<WorkEntrySessionDto> {
-
     if (requestingUser.role !== UserRole.ADMIN) {
       throw new BaseException('403we10');
     }
@@ -634,9 +630,13 @@ export class WorkEntriesService {
       throw new BaseException('404we00');
     }
 
-    const startedAt = dto.startedAt ? new Date(dto.startedAt) : session.startedAt;
-    const stoppedAt = dto.stoppedAt ? new Date(dto.stoppedAt) : session.stoppedAt;
-    const pausedAt  = dto.pausedAt  ? new Date(dto.pausedAt)  : session.pausedAt;
+    const startedAt = dto.startedAt
+      ? new Date(dto.startedAt)
+      : session.startedAt;
+    const stoppedAt = dto.stoppedAt
+      ? new Date(dto.stoppedAt)
+      : session.stoppedAt;
+    const pausedAt = dto.pausedAt ? new Date(dto.pausedAt) : session.pausedAt;
 
     if (startedAt && stoppedAt && startedAt >= stoppedAt) {
       throw new BaseException('400we13');
@@ -660,5 +660,96 @@ export class WorkEntriesService {
     const saved = await this.workEntrySessionRepository.save(session);
 
     return parseWorkEntrySessionToDto(saved);
+  }
+
+  private applyPriorityFilter(
+    qb: SelectQueryBuilder<WorkEntry>,
+    priority: string,
+  ): void {
+    qb.andWhere('we.priority = :priority', { priority });
+  }
+
+  private applyClientNameFilter(
+    qb: SelectQueryBuilder<WorkEntry>,
+    clientName: string,
+  ): void {
+    qb.andWhere('we."clientName" ILIKE :clientName', {
+      clientName: `%${clientName}%`,
+    });
+  }
+
+  private applyMachineNameFilter(
+    qb: SelectQueryBuilder<WorkEntry>,
+    machineName: string,
+  ): void {
+    qb.andWhere('we."machineName" ILIKE :machineName', {
+      machineName: `%${machineName}%`,
+    });
+  }
+
+  private applyMachineModelFilter(
+    qb: SelectQueryBuilder<WorkEntry>,
+    machineModel: string,
+  ): void {
+    qb.andWhere('we."machineModel" ILIKE :machineModel', {
+      machineModel: `%${machineModel}%`,
+    });
+  }
+
+  private applyAssignedUsersFilter(
+    qb: SelectQueryBuilder<WorkEntry>,
+    ctx: QueryContext,
+    assignedUserIds: string,
+  ): void {
+    const userIds = assignedUserIds.split(',').filter(Boolean);
+    if (userIds.length === 0) return;
+
+    if (!ctx.assignmentJoined) {
+      qb.leftJoin(
+        'work_entry_assignment',
+        'wea',
+        'wea."workEntryId" = we.id AND wea."isDeleted" = false',
+      ).distinct(true);
+      ctx.assignmentJoined = true;
+    }
+
+    qb.andWhere('wea."assignedUserId" IN (:...userIds)', { userIds });
+  }
+
+  private applySearchFilter(
+    qb: SelectQueryBuilder<WorkEntry>,
+    ctx: QueryContext,
+    search: string,
+  ): void {
+    const q = search.trim().toLowerCase();
+    if (!q) return;
+
+    if (!ctx.assignmentJoined) {
+      qb.leftJoin(
+        'work_entry_assignment',
+        'wea',
+        'wea."workEntryId" = we.id AND wea."isDeleted" = false',
+      ).distinct(true);
+      ctx.assignmentJoined = true;
+    }
+
+    if (!ctx.userJoined) {
+      qb.leftJoin('firebase_user', 'u', 'u.id = wea."assignedUserId"');
+      ctx.userJoined = true;
+    }
+
+    qb.andWhere(
+      `word_similarity(
+        unaccent(lower(:q)),
+        unaccent(lower(COALESCE(we."clientName", '') || ' ' || COALESCE(we."machineName", '') || ' ' || COALESCE(we."machineModel", '') || ' ' || COALESCE(u.name, '')))
+      ) >= :thr`,
+      { q, thr: 0.4 },
+    ).addSelect(
+      `word_similarity(
+        unaccent(lower(:q)),
+        unaccent(lower(COALESCE(we."clientName", '') || ' ' || COALESCE(we."machineName", '') || ' ' || COALESCE(we."machineModel", '') || ' ' || COALESCE(u.name, '')))
+      )`,
+      'similarity_score',
+    );
   }
 }
