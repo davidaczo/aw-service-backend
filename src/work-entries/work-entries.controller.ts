@@ -72,6 +72,19 @@ export class WorkEntriesController {
     );
   }
 
+  @Put('session-update/:sessionId')
+  async updateSession(
+      @Req() request: RequestWithFirebaseUser,
+      @Param('sessionId') sessionId: string,
+      @Body() dto: UpdateWorkEntrySessionDto,
+  ): Promise<WorkEntrySessionDto> {
+    return this.workEntriesService.updateSession(
+        sessionId,
+        dto,
+        request.user,
+    );
+  }
+
   @Get(':id')
   async getWorkEntry(
     @Req() request: RequestWithFirebaseUser,
@@ -189,16 +202,6 @@ export class WorkEntriesController {
       dto.reason,
       images,
     );
-  }
-
-  @Put('sessions/:sessionId')
-  @UseGuards(FirebaseAuthGuard)
-  async updateSession(
-    @Req() request: RequestWithFirebaseUser,
-    @Param('sessionId') sessionId: string,
-    @Body() dto: UpdateWorkEntrySessionDto,
-  ): Promise<WorkEntrySessionDto> {
-    return this.workEntriesService.updateSession(sessionId, dto, request.user);
   }
 
   @Get(':id/sessions')
