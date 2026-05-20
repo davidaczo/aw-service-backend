@@ -131,6 +131,7 @@ export class WorkEntriesService {
     if (filters.machineModel)
       this.applyMachineModelFilter(qb, filters.machineModel);
     if (filters.search) this.applySearchFilter(qb, ctx, filters.search);
+    if (filters.fromDate || filters.toDate) this.applyDateFilter(qb, filters.fromDate, filters.toDate);
 
     const hasSearch = !!filters.search?.trim();
     if (hasSearch) {
@@ -751,5 +752,42 @@ export class WorkEntriesService {
       )`,
       'similarity_score',
     );
+  }
+
+  private applyDateFilter(
+      qb: SelectQueryBuilder<WorkEntry>,
+      fromDate?: string,
+      toDate?: string,
+  ): void {
+    if (!fromDate && !toDate) return;
+
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    if (from) from.setUTCHours(0, 0, 0, 0);
+    if (to) to.setUTCHours(23, 59, 59, 999);
+
+    qb.leftJoin(
+        'work_entry_session',
+        'wes',
+        'wes."workEntryId" = we.id AND wes."isDeleted" = false',
+    );
+
+    if (from && to) {
+      qb.andWhere(
+          'wes."startedAt" <= :to AND COALESCE(wes."stoppedAt", wes."pausedAt", NOW()) >= :from',
+          { from, to },
+      );
+    } else if (from) {
+      qb.andWhere(
+          'COALESCE(wes."stoppedAt", wes."pausedAt", NOW()) >= :from',
+          { from },
+      );
+    } else if (to) {
+      qb.andWhere(
+          'wes."startedAt" <= :to',
+          { to },
+      );
+    }
   }
 }

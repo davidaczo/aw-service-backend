@@ -5,4 +5,6 @@ export interface WorkEntryFilters {
   clientName?: string;
   machineName?: string;
   machineModel?: string;
+  fromDate?: string;
+  toDate?: string;
 }
