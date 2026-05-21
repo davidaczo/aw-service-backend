@@ -7,4 +7,5 @@ export interface WorkEntryFilters {
   machineModel?: string;
   fromDate?: string;
   toDate?: string;
+  createdByUserId?: string;
 }

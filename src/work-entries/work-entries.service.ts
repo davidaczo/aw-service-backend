@@ -132,6 +132,8 @@ export class WorkEntriesService {
       this.applyMachineModelFilter(qb, filters.machineModel);
     if (filters.search) this.applySearchFilter(qb, ctx, filters.search);
     if (filters.fromDate || filters.toDate) this.applyDateFilter(qb, filters.fromDate, filters.toDate);
+    if (filters.createdByUserId)
+      this.applyCreatedByFilter(qb, filters.createdByUserId);
 
     const hasSearch = !!filters.search?.trim();
     if (hasSearch) {
@@ -789,5 +791,12 @@ export class WorkEntriesService {
           { to },
       );
     }
+  }
+
+  private applyCreatedByFilter(
+      qb: SelectQueryBuilder<WorkEntry>,
+      createdByUserId: string,
+  ): void {
+    qb.andWhere('we."userId" = :createdByUserId AND we."isDeleted" = false', { createdByUserId });
   }
 }
