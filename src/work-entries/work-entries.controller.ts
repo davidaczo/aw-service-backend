@@ -32,6 +32,7 @@ import { StopWorkEntryDto } from './dto/stop-work-entry.dto';
 import { PaginatedList } from '../dto/paginated-list.dto';
 import { num } from '../utils/utils';
 import { UpdateWorkEntrySessionDto } from './dto/update-work-entry-session.dto';
+import {DateValidationPipe} from "../utils/pipes/validation.pipe";
 
 @Controller('work-entries')
 @UseGuards(FirebaseAuthGuard)
@@ -56,6 +57,8 @@ export class WorkEntriesController {
     @Query('clientName') clientName?: string,
     @Query('machineName') machineName?: string,
     @Query('machineModel') machineModel?: string,
+    @Query('fromDate', new DateValidationPipe('400we16')) fromDate?: string,
+    @Query('toDate', new DateValidationPipe('400we16')) toDate?: string,
   ): Promise<PaginatedList<WorkEntryDto>> {
     return this.workEntriesService.getWorkEntries(num(page), num(pageSize), {
       search,
@@ -64,6 +67,8 @@ export class WorkEntriesController {
       clientName,
       machineName,
       machineModel,
+      fromDate,
+      toDate
     });
   }
 
