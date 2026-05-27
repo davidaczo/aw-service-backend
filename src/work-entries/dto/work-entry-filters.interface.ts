@@ -8,4 +8,5 @@ export interface WorkEntryFilters {
   fromDate?: string;
   toDate?: string;
   createdByUserId?: string;
+  isAssigned?: boolean;
 }

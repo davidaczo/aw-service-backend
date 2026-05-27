@@ -60,6 +60,7 @@ export class WorkEntriesController {
     @Query('fromDate', new DateValidationPipe('400we16')) fromDate?: string,
     @Query('toDate', new DateValidationPipe('400we16')) toDate?: string,
     @Query('createdByUserId') createdByUserId?: string,
+    @Query('isAssigned') isAssigned?: boolean,
   ): Promise<PaginatedList<WorkEntryDto>> {
     return this.workEntriesService.getWorkEntries(num(page), num(pageSize), {
       search,
@@ -70,7 +71,8 @@ export class WorkEntriesController {
       machineModel,
       fromDate,
       toDate,
-      createdByUserId
+      createdByUserId,
+      isAssigned,
     });
   }
 
