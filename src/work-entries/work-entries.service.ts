@@ -134,6 +134,9 @@ export class WorkEntriesService {
     if (filters.fromDate || filters.toDate) this.applyDateFilter(qb, filters.fromDate, filters.toDate);
     if (filters.createdByUserId)
       this.applyCreatedByFilter(qb, filters.createdByUserId);
+    if (filters.isAssigned !== undefined)
+      this.applyIsAssignedFilter(qb, ctx, filters.isAssigned);
+    if (filters.status) this.applyStatusFilter(qb, filters.status);
 
     const hasSearch = !!filters.search?.trim();
     if (hasSearch) {
@@ -798,5 +801,33 @@ export class WorkEntriesService {
       createdByUserId: string,
   ): void {
     qb.andWhere('we."userId" = :createdByUserId AND we."isDeleted" = false', { createdByUserId });
+  }
+
+  private applyIsAssignedFilter(
+      qb: SelectQueryBuilder<WorkEntry>,
+      ctx: QueryContext,
+      isAssigned: boolean,
+  ): void {
+    if (!ctx.assignmentJoined) {
+      qb.leftJoin(
+          'work_entry_assignment',
+          'wea',
+          'wea."workEntryId" = we.id AND wea."isDeleted" = false',
+      );
+      ctx.assignmentJoined = true;
+    }
+
+    if (isAssigned) {
+      qb.andWhere('wea."id" IS NOT NULL');
+    } else {
+      qb.andWhere('wea."id" IS NULL');
+    }
+  }
+
+  private applyStatusFilter(
+      qb: SelectQueryBuilder<WorkEntry>,
+      status: WorkEntryStatus,
+  ): void {
+    qb.andWhere('we."status" = :status', { status });
   }
 }
