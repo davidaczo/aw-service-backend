@@ -33,6 +33,7 @@ import { PaginatedList } from '../dto/paginated-list.dto';
 import { num } from '../utils/utils';
 import { UpdateWorkEntrySessionDto } from './dto/update-work-entry-session.dto';
 import {DateValidationPipe} from "../utils/pipes/validation.pipe";
+import {WorkEntryStatus} from "../entities/enum/work-entry-status.enum";
 
 @Controller('work-entries')
 @UseGuards(FirebaseAuthGuard)
@@ -61,6 +62,7 @@ export class WorkEntriesController {
     @Query('toDate', new DateValidationPipe('400we16')) toDate?: string,
     @Query('createdByUserId') createdByUserId?: string,
     @Query('isAssigned') isAssigned?: boolean,
+    @Query('status') status?: WorkEntryStatus,
   ): Promise<PaginatedList<WorkEntryDto>> {
     return this.workEntriesService.getWorkEntries(num(page), num(pageSize), {
       search,
@@ -73,6 +75,7 @@ export class WorkEntriesController {
       toDate,
       createdByUserId,
       isAssigned,
+      status
     });
   }
 

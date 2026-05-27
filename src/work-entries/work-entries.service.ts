@@ -136,6 +136,7 @@ export class WorkEntriesService {
       this.applyCreatedByFilter(qb, filters.createdByUserId);
     if (filters.isAssigned !== undefined)
       this.applyIsAssignedFilter(qb, ctx, filters.isAssigned);
+    if (filters.status) this.applyStatusFilter(qb, filters.status);
 
     const hasSearch = !!filters.search?.trim();
     if (hasSearch) {
@@ -821,5 +822,12 @@ export class WorkEntriesService {
     } else {
       qb.andWhere('wea."id" IS NULL');
     }
+  }
+
+  private applyStatusFilter(
+      qb: SelectQueryBuilder<WorkEntry>,
+      status: WorkEntryStatus,
+  ): void {
+    qb.andWhere('we."status" = :status', { status });
   }
 }
